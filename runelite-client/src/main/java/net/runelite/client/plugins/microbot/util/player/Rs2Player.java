@@ -205,7 +205,7 @@ public class Rs2Player {
      * Wait for animation
      */
     public static void waitForAnimation() {
-        boolean result = sleepUntilTrue(Rs2Player::isAnimating, 100, 5000);
+        boolean result = sleepUntilTrue(Rs2Player::isAnimating, 200, 5000);
         if (!result) return;
         sleepUntil(() -> !Rs2Player.isAnimating());
     }
