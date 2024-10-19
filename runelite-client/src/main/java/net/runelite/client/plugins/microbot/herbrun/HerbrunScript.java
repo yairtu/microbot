@@ -68,7 +68,7 @@ public class HerbrunScript extends Script {
         int ring = config.RING().getItemId();
 
         Microbot.enableAutoRunOn = false;
-        botStatus = states.GEARING;
+        botStatus = states.WEISS_HANDLE_PATCH;
 
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
@@ -128,9 +128,7 @@ public class HerbrunScript extends Script {
                             handleWalkingToPatch(catherbyHerb, states.CATHERBY_HANDLE_PATCH);
                         }
                     case CATHERBY_HANDLE_PATCH:
-                        if (!Rs2Player.isMoving() &&
-                                !Rs2Player.isAnimating() &&
-                                !Microbot.getClient().getLocalPlayer().isInteracting()) {
+                        if (Rs2Player.getWorldLocation().distanceTo(catherbyHerb) < 10) {
                             System.out.println("Current state: CATHERBY_HANDLE_PATCH");
                             printHerbPatchActions(catherbyHerbPatchID);
                             handleHerbPatch(catherbyHerbPatchID, seedToPlant, config, 0);
@@ -154,9 +152,7 @@ public class HerbrunScript extends Script {
                         }
                     case MORYTANIA_HANDLE_PATCH:
                         System.out.println("Handling Morytania patch");
-                        if (!Rs2Player.isMoving() &&
-                                !Rs2Player.isAnimating() &&
-                                !Microbot.getClient().getLocalPlayer().isInteracting()) {
+                        if (Rs2Player.getWorldLocation().distanceTo(morytaniaHerb) < 10) {
                             printHerbPatchActions(morytaniaHerbPatchID);
                             handleHerbPatch(morytaniaHerbPatchID, seedToPlant, config, 0);
                             addCompost(config, morytaniaHerbPatchID);
@@ -248,13 +244,19 @@ public class HerbrunScript extends Script {
                             plantSeed(cabbageHerbPatchID, seedToPlant, botStatus = states.WEISS_TELEPORT);
                         }
                         break;
-                        case WEISS_TELEPORT:
-                            if (!Rs2Player.isMoving() &&
-                                    !Rs2Player.isAnimating() &&
-                                    !Microbot.getClient().getLocalPlayer().isInteracting()) {
-                                handleTeleportToWeiss();
-                            }
-                            break;
+                    case WEISS_TELEPORT:
+                        if (!Rs2Player.isMoving() &&
+                                !Rs2Player.isAnimating() &&
+                                !Microbot.getClient().getLocalPlayer().isInteracting()) {
+                            handleTeleportToWeiss();
+
+                        }
+                        break;
+                    case WEISS_HANDLE_PATCH:
+                        sleepUntil(() -> Rs2Player.getWorldLocation().distanceTo(weissHerb) < 10);
+                        printHerbPatchActions(weissHerbPatchID);
+                        handleHerbPatch(weissHerbPatchID, seedToPlant, config, 0);
+                        addCompost(config, weissHerbPatchID);
                     case GUILD_TELEPORT:
                         if (!Rs2Player.isMoving() &&
                                 !Rs2Player.isAnimating() &&
@@ -262,13 +264,13 @@ public class HerbrunScript extends Script {
                             handleTeleportToGuild();
                         }
                         break;
-                    case GUILD_WALKING_TO_PATCH:
-                        if (!Rs2Player.isMoving() &&
-                                !Rs2Player.isAnimating() &&
-                                !Microbot.getClient().getLocalPlayer().isInteracting()) {
-                            handleWalkingToPatch(farmingGuildHerb, states.GUILD_HANDLE_PATCH);
-                        }
-                        break;
+//                    case GUILD_WALKING_TO_PATCH:
+//                        if (!Rs2Player.isMoving() &&
+//                                !Rs2Player.isAnimating() &&
+//                                !Microbot.getClient().getLocalPlayer().isInteracting()) {
+//                            handleWalkingToPatch(farmingGuildHerb, states.GUILD_HANDLE_PATCH);
+//                        }
+//                        break;
                     case GUILD_HANDLE_PATCH:
                         if (!Rs2Player.isMoving() &&
                                 !Rs2Player.isAnimating() &&
@@ -325,7 +327,7 @@ public class HerbrunScript extends Script {
     }
 
     private void withdrawHerbSetup(HerbrunConfig config) {
-        Rs2Bank.withdrawX(config.SEED().getItemId(), 8);
+        Rs2Bank.withdrawX(config.SEED().getItemId(), 9);
         if (config.COMPOST()) {
             Rs2Bank.withdrawOne(ItemID.BOTTOMLESS_COMPOST_BUCKET_22997);
         } else {
@@ -342,13 +344,26 @@ public class HerbrunScript extends Script {
         } else if (Rs2Bank.hasItem(ItemID.BASIC_QUETZAL_WHISTLE)) {
             Rs2Bank.withdrawOne(ItemID.BASIC_QUETZAL_WHISTLE);
         }
-        Rs2Bank.withdrawOne(ItemID.STONY_BASALT);
         Rs2Bank.withdrawOne(ItemID.XERICS_TALISMAN);
         Rs2Bank.withdrawOne(ItemID.RAKE);
+        if (Rs2Bank.hasItem(ItemID.SKILLS_NECKLACE1)) {
+            Rs2Bank.withdrawOne(ItemID.SKILLS_NECKLACE1);
+        } else if (Rs2Bank.hasItem(ItemID.SKILLS_NECKLACE2)) {
+            Rs2Bank.withdrawOne(ItemID.SKILLS_NECKLACE2);
+        } else if (Rs2Bank.hasItem(ItemID.SKILLS_NECKLACE3)) {
+            Rs2Bank.withdrawOne(ItemID.SKILLS_NECKLACE3);
+        } else if (Rs2Bank.hasItem(ItemID.SKILLS_NECKLACE4)) {
+            Rs2Bank.withdrawOne(ItemID.SKILLS_NECKLACE4);
+        } else if (Rs2Bank.hasItem(ItemID.SKILLS_NECKLACE5)) {
+            Rs2Bank.withdrawOne(ItemID.SKILLS_NECKLACE5);
+        } else {
+            Rs2Bank.withdrawOne(ItemID.SKILLS_NECKLACE6);
+        }
+        Rs2Bank.withdrawOne(config.RING().getItemId());
+        Rs2Bank.withdrawOne(ItemID.STONY_BASALT);
+        Rs2Bank.withdrawOne(ItemID.ICY_BASALT);
         Rs2Bank.withdrawX(ItemID.AIR_RUNE, 5);
         Rs2Bank.withdrawX(ItemID.LAW_RUNE, 1);
-        Rs2Bank.withdrawOne(ItemID.SKILLS_NECKLACE6);
-        Rs2Bank.withdrawOne(config.RING().getItemId());
         checkBeforeWithdrawAndEquip("Magic secateurs");
     }
 
@@ -572,14 +587,14 @@ public class HerbrunScript extends Script {
             guildTeleport();  // Perform Hosidius teleport
             hasTeleported = true;
         }
-        botStatus = states.GUILD_WALKING_TO_PATCH;
+        botStatus = states.GUILD_HANDLE_PATCH;
     }
 
     private boolean weissTeleport() {
         sleep(100);
         if (!Rs2Player.isAnimating()) {
             System.out.println("Teleporting to Weiss");
-            boolean success = Rs2Inventory.interact(ItemID.STONY_BASALT, "Weiss");
+            boolean success = Rs2Inventory.interact(ItemID.ICY_BASALT, "Weiss");
             Rs2Player.waitForAnimation();
             sleepUntil(() -> !Rs2Player.isAnimating());
             return success;
